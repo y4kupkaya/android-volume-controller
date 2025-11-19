@@ -1,0 +1,80 @@
+name: Question or Support
+description: Ask a question or get help with Android Volume Controller
+title: "[QUESTION] "
+labels: ["question", "support"]
+assignees:
+  - y4kupkaya
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for using Android Volume Controller! 🎵
+        
+        Please check the [README](https://github.com/y4kupkaya/android-volume-controller/blob/main/README.md) and existing issues before asking a question.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Question Type
+      description: What type of help do you need?
+      options:
+        - Installation and Setup
+        - Usage and Configuration
+        - Troubleshooting
+        - Technical Question
+        - General Support
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Please describe your question in detail...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: |
+        Please provide context about your setup and what you're trying to achieve.
+        Include your system information if relevant.
+      placeholder: |
+        - Operating System: Windows 11
+        - Python Version: 3.9.7
+        - Android Device: Samsung Galaxy S21
+        - What I'm trying to do: ...
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What Have You Tried?
+      description: What solutions have you already attempted?
+      placeholder: |
+        - I tried following the README instructions
+        - I searched existing issues
+        - I attempted...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Any other information that might help us answer your question?
+      placeholder: Screenshots, error messages, or other relevant details...
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have read the README and documentation
+          required: true
+        - label: I have searched existing issues for similar questions
+          required: true
+        - label: I have provided sufficient context for my question
+          required: true

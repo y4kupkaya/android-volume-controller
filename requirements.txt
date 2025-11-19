@@ -1,0 +1,11 @@
+# Production dependencies for Android Volume Controller
+# Install with: pip install -r requirements.txt
+
+# Windows Audio System Integration
+pycaw>=20220416
+
+# Windows-specific audio support (built-in with Python on Windows)
+# winsound - included with Python standard library on Windows
+
+# Note: ADB (Android Debug Bridge) is required but installed separately
+# Download from: https://developer.android.com/studio/command-line/adb

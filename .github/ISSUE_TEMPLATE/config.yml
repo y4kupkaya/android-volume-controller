@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/y4kupkaya/android-volume-controller/blob/main/README.md
+    about: Check the comprehensive documentation and setup guide
+  - name: 🇹🇷 Turkish Documentation
+    url: https://github.com/y4kupkaya/android-volume-controller/blob/main/README-TR.md
+    about: Türkçe dokümantasyon ve kurulum rehberi
+  - name: 🤝 Contributing Guide
+    url: https://github.com/y4kupkaya/android-volume-controller/blob/main/CONTRIBUTING.md
+    about: Learn how to contribute to the project
+  - name: 🔒 Security Policy
+    url: https://github.com/y4kupkaya/android-volume-controller/blob/main/SECURITY.md
+    about: Report security vulnerabilities responsibly
+  - name: 💬 Discussions
+    url: https://github.com/y4kupkaya/android-volume-controller/discussions
+    about: Join community discussions and share ideas
+  - name: 🌐 Author Website
+    url: https://yakupkaya.me
+    about: Visit the author's website for more projects
