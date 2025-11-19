@@ -114,13 +114,10 @@ python android_volume_controller.py
 # Simply use Windows Volume Mixer to control your Android device
 ```
 
-### Command Line Arguments
+### Running the Application
 ```bash
-# Run with verbose logging
-python android_volume_controller.py --verbose
-
-# Run in background mode
-python android_volume_controller.py --background
+# Start the volume controller
+python android_volume_controller.py
 ```
 
 ## 🔧 Configuration

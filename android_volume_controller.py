@@ -29,6 +29,7 @@ import wave
 import struct
 import logging
 import signal
+import argparse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -64,7 +65,7 @@ class AndroidVolumeController:
     - Audio session management
     """
 
-    def __init__(self):
+    def __init__(self, background_mode=False, verbose=False):
         """Initialize the Android Volume Controller."""
         self.adb_path = "adb"  # Assumes adb is in system PATH
         self.android_max_volume = 0
@@ -73,12 +74,21 @@ class AndroidVolumeController:
         self.running = True
         self.audio_thread = None
         self.connection_lost = False
+        self.background_mode = background_mode
+        self.verbose = verbose
 
+        # Configure logging based on mode
+        if self.background_mode:
+            logging.getLogger().setLevel(logging.ERROR)
+        elif self.verbose:
+            logging.getLogger().setLevel(logging.DEBUG)
+        
         # Set up signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
-        logger.info("Initializing Android Volume Controller")
+        if not self.background_mode:
+            logger.info("Initializing Android Volume Controller")
 
         try:
             self._check_dependencies()
@@ -90,7 +100,8 @@ class AndroidVolumeController:
 
     def _signal_handler(self, signum, frame):
         """Handle system signals for graceful shutdown."""
-        logger.info("Received shutdown signal, cleaning up...")
+        if not self.background_mode:
+            logger.info("Received shutdown signal, cleaning up...")
         self.cleanup()
         sys.exit(0)
 
@@ -101,7 +112,8 @@ class AndroidVolumeController:
         Raises:
             DependencyError: If required dependencies are missing
         """
-        logger.info("Checking system dependencies...")
+        if not self.background_mode:
+            logger.info("Checking system dependencies...")
 
         # Check pycaw library
         try:
@@ -109,7 +121,8 @@ class AndroidVolumeController:
 
             self.AudioUtilities = AudioUtilities
             self.ISimpleAudioVolume = ISimpleAudioVolume
-            logger.info("✓ pycaw library available")
+            if not self.background_mode:
+                logger.info("✓ pycaw library available")
         except ImportError as e:
             raise DependencyError(
                 "pycaw library is required but not installed. "
@@ -121,7 +134,8 @@ class AndroidVolumeController:
             import winsound
 
             self.winsound = winsound
-            logger.info("✓ winsound module available")
+            if not self.background_mode:
+                logger.info("✓ winsound module available")
         except ImportError as e:
             raise DependencyError(
                 "winsound module is not available. "
@@ -135,7 +149,8 @@ class AndroidVolumeController:
             )
             if result.returncode != 0:
                 raise subprocess.CalledProcessError(result.returncode, "adb version")
-            logger.info("✓ ADB is installed and accessible")
+            if not self.background_mode:
+                logger.info("✓ ADB is installed and accessible")
         except (
             subprocess.CalledProcessError,
             subprocess.TimeoutExpired,
@@ -153,7 +168,8 @@ class AndroidVolumeController:
         Raises:
             AndroidDeviceError: If device connection fails
         """
-        logger.info("Initializing Android device connection...")
+        if not self.background_mode:
+            logger.info("Initializing Android device connection...")
 
         # Check for connected devices
         try:
@@ -175,7 +191,8 @@ class AndroidVolumeController:
                 )
 
             device_id = devices[0].split("\t")[0]
-            logger.info(f"✓ Android device connected: {device_id}")
+            if not self.background_mode:
+                logger.info(f"✓ Android device connected: {device_id}")
 
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             raise AndroidDeviceError(f"Failed to check device connection: {e}") from e
@@ -185,7 +202,8 @@ class AndroidVolumeController:
         if self.android_max_volume <= 0:
             raise AndroidDeviceError("Failed to retrieve device volume information")
 
-        logger.info(f"✓ Android maximum volume level: {self.android_max_volume}")
+        if not self.background_mode:
+            logger.info(f"✓ Android maximum volume level: {self.android_max_volume}")
 
     def _get_android_max_volume(self):
         """
@@ -445,7 +463,8 @@ class AndroidVolumeController:
         Raises:
             AudioSystemError: If audio system initialization fails
         """
-        logger.info("Starting audio system...")
+        if not self.background_mode:
+            logger.info("Starting audio system...")
 
         silence_file = self._create_silence_audio_file()
         if not silence_file:
@@ -460,8 +479,9 @@ class AndroidVolumeController:
         self.audio_thread = threading.Thread(target=audio_loop, daemon=True)
         self.audio_thread.start()
 
-        logger.info("✓ Audio system started successfully")
-        logger.info("Waiting for Windows Volume Mixer registration...")
+        if not self.background_mode:
+            logger.info("✓ Audio system started successfully")
+            logger.info("Waiting for Windows Volume Mixer registration...")
         time.sleep(3)
 
     def _audio_playback_loop(self, silence_file):
@@ -530,15 +550,16 @@ class AndroidVolumeController:
         This method monitors the Windows Volume Mixer for changes and synchronizes
         them with the connected Android device.
         """
-        logger.info("Starting volume synchronization...")
-        logger.info("Instructions:")
-        logger.info(
-            "1. Open Windows Volume Mixer (right-click speaker icon > Open Volume mixer)"
-        )
-        logger.info("2. Find 'Python' application in the mixer")
-        logger.info("3. Adjust the volume slider to control your Android device")
-        logger.info("4. Use mute button to mute/unmute your Android device")
-        print("=" * 60)
+        if not self.background_mode:
+            logger.info("Starting volume synchronization...")
+            logger.info("Instructions:")
+            logger.info(
+                "1. Open Windows Volume Mixer (right-click speaker icon > Open Volume mixer)"
+            )
+            logger.info("2. Find 'Python' application in the mixer")
+            logger.info("3. Adjust the volume slider to control your Android device")
+            logger.info("4. Use mute button to mute/unmute your Android device")
+            print("=" * 60)
 
         audio_session = None
         volume_interface = None
@@ -550,12 +571,12 @@ class AndroidVolumeController:
                 if audio_session is None or search_attempts % 50 == 0:
                     audio_session, volume_interface = self._find_audio_session()
 
-                    if audio_session and search_attempts == 0:
+                    if audio_session and search_attempts == 0 and not self.background_mode:
                         logger.info("✓ Audio session found in Volume Mixer")
                         logger.info(
                             "You can now control your Android device volume from Windows!"
                         )
-                    elif audio_session is None and search_attempts % 50 == 0:
+                    elif audio_session is None and search_attempts % 50 == 0 and not self.background_mode:
                         logger.info("Searching for audio session in Volume Mixer...")
 
                 search_attempts += 1
@@ -590,16 +611,18 @@ class AndroidVolumeController:
 
                 if is_muted:
                     if self._set_android_mute(True):
-                        logger.info(
-                            "🔇 Android device muted (synchronized with Windows)"
-                        )
+                        if not self.background_mode:
+                            logger.info(
+                                "🔇 Android device muted (synchronized with Windows)"
+                            )
                     else:
                         logger.error("Failed to mute Android device")
                 else:
                     if self._set_android_mute(False):
-                        logger.info(
-                            "🔊 Android device unmuted (synchronized with Windows)"
-                        )
+                        if not self.background_mode:
+                            logger.info(
+                                "🔊 Android device unmuted (synchronized with Windows)"
+                            )
                     else:
                         logger.error("Failed to unmute Android device")
 
@@ -610,10 +633,11 @@ class AndroidVolumeController:
                 if android_volume != self.last_android_volume:
                     if self._set_android_volume(android_volume):
                         self.last_android_volume = android_volume
-                        percentage = int(current_volume * 100)
-                        logger.info(
-                            f"📱 Volume updated: {android_volume}/{self.android_max_volume} ({percentage}%)"
-                        )
+                        if not self.background_mode:
+                            percentage = int(current_volume * 100)
+                            logger.info(
+                                f"📱 Volume updated: {android_volume}/{self.android_max_volume} ({percentage}%)"
+                            )
                     else:
                         logger.error(
                             f"Failed to update Android volume to {android_volume}"
@@ -624,14 +648,16 @@ class AndroidVolumeController:
 
     def cleanup(self):
         """Perform cleanup operations before shutdown."""
-        logger.info("Shutting down Android Volume Controller...")
+        if not self.background_mode:
+            logger.info("Shutting down Android Volume Controller...")
         self.running = False
 
         # Wait for audio thread to finish
         if self.audio_thread and self.audio_thread.is_alive():
             try:
                 self.audio_thread.join(timeout=2)
-                logger.info("✓ Audio thread stopped")
+                if not self.background_mode:
+                    logger.info("✓ Audio thread stopped")
             except Exception:
                 pass
 
@@ -641,39 +667,91 @@ class AndroidVolumeController:
             for temp_file in temp_files:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            logger.info("✓ Temporary files cleaned up")
+            if not self.background_mode:
+                logger.info("✓ Temporary files cleaned up")
         except Exception as e:
             logger.warning(f"Cleanup warning: {e}")
 
 
-def display_welcome_message():
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Android Volume Controller for Windows",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python android_volume_controller.py              # Normal mode with full output
+  python android_volume_controller.py --verbose    # Verbose mode with debug info
+  python android_volume_controller.py --background # Background mode (minimal output)
+
+For more information, visit: https://github.com/y4kupkaya/android-volume-controller
+        """
+    )
+    
+    parser.add_argument(
+        "--background",
+        action="store_true",
+        help="Run in background mode with minimal console output (errors only)"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging with debug information"
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="Android Volume Controller v1.0.0"
+    )
+    
+    return parser.parse_args()
+
+
+def display_welcome_message(background_mode=False):
     """Display welcome message and application information."""
-    print("=" * 60)
-    print("Android Volume Controller for Windows")
-    print("Control your Android device volume from Windows Volume Mixer")
-    print("")
-    print("Copyright (C) 2025 Yakup Kaya - yakupkaya.me")
-    print("Licensed under GNU General Public License v3.0")
-    print("=" * 60)
+    if not background_mode:
+        print("=" * 60)
+        print("Android Volume Controller for Windows")
+        print("Control your Android device volume from Windows Volume Mixer")
+        print("")
+        print("Copyright (C) 2025 Yakup Kaya - yakupkaya.me")
+        print("Licensed under GNU General Public License v3.0")
+        print("=" * 60)
 
 
 def main():
     """Main application entry point."""
-    display_welcome_message()
+    args = parse_arguments()
+    
+    # Display welcome message unless in background mode
+    display_welcome_message(args.background)
+    
+    # Show mode info
+    if args.verbose and not args.background:
+        logger.info("Running in verbose mode")
+    elif args.background:
+        logger.error("Running in background mode (minimal output)")
 
     controller = None
     try:
-        controller = AndroidVolumeController()
+        controller = AndroidVolumeController(
+            background_mode=args.background,
+            verbose=args.verbose
+        )
         controller.start_volume_synchronization()
     except KeyboardInterrupt:
-        logger.info("Application interrupted by user")
+        if not args.background:
+            logger.info("Application interrupted by user")
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return 1
     finally:
         if controller:
             controller.cleanup()
-        logger.info("Application shutdown complete")
+        if not args.background:
+            logger.info("Application shutdown complete")
 
     return 0
 

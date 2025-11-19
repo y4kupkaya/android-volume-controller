@@ -120,14 +120,11 @@ python android_volume_controller.py
 # Android cihazınızı kontrol etmek için sadece Windows Ses Karıştırıcısını kullanın
 ```
 
-### Komut Satırı Argümanları
+### Uygulamayı Çalıştırma
 
 ```bash
-# Ayrıntılı günlükleme ile çalıştır
-python android_volume_controller.py --verbose
-
-# Arka plan modunda çalıştır
-python android_volume_controller.py --background
+# Ses kontrolcüsünü başlat
+python android_volume_controller.py
 ```
 
 ## 🔧 Yapılandırma
